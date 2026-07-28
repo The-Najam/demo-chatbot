@@ -1,4 +1,38 @@
-<!DOCTYPE html>
+
+
+import streamlit as st
+import streamlit.components.v1 as components
+
+st.set_page_config(
+    page_title="AI Immigration Assistant Demo",
+    page_icon="🛂",
+    layout="wide",
+)
+
+# Remove Streamlit's default padding/max-width so the embedded page can
+# render edge-to-edge, matching the original full-page design.
+st.markdown(
+    """
+    <style>
+        .block-container {
+            padding-top: 0rem;
+            padding-bottom: 0rem;
+            padding-left: 0rem;
+            padding-right: 0rem;
+            max-width: 100% !important;
+        }
+        header[data-testid="stHeader"] {
+            background: transparent;
+        }
+        iframe {
+            width: 100% !important;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+ORIGINAL_HTML = r"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -981,15 +1015,9 @@
 
       const botText = data.response || "No response received.";
 
-
-
       appendMessage(botText, "bot");
 
-
-
       const lowerMessage = message.toLowerCase();
-
-
 
       const hasBuyingIntent = buyingIntentPhrases.some(
 
@@ -997,15 +1025,11 @@
 
       );
 
-
-
       const isFallback = botText.includes(
 
         "Please leave your details below"
 
       );
-
-
 
      if (isFallback || hasBuyingIntent || data.show_form) {
 
@@ -1038,7 +1062,6 @@
   }
 
 
-
   userInput.addEventListener("keypress", function (e) {
 
     if (e.key === "Enter") sendMessage();
@@ -1053,3 +1076,9 @@
 
 </body>
 </html>
+"""
+
+# Render the untouched HTML/CSS/JS inside Streamlit.
+# height/scrolling are tuned so the whole landing page + chat widget fit
+# without an extra inner scrollbar; adjust `height` if you add/remove content.
+components.html(ORIGINAL_HTML, height=1000, scrolling=True)

@@ -601,7 +601,7 @@
 
 
 
-  const API_BASE = "https://e144-39-57-215-227.ngrok-free.app";
+  const API_BASE = "http://localhost:8000";
 
 
   const FALLBACK_TEXT =
@@ -981,15 +981,9 @@
 
       const botText = data.response || "No response received.";
 
-
-
       appendMessage(botText, "bot");
 
-
-
       const lowerMessage = message.toLowerCase();
-
-
 
       const hasBuyingIntent = buyingIntentPhrases.some(
 
@@ -997,15 +991,11 @@
 
       );
 
-
-
       const isFallback = botText.includes(
 
         "Please leave your details below"
 
       );
-
-
 
      if (isFallback || hasBuyingIntent || data.show_form) {
 
@@ -1036,7 +1026,6 @@
     }
 
   }
-
 
 
   userInput.addEventListener("keypress", function (e) {
