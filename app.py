@@ -41,7 +41,7 @@ st.markdown(
        below (2rem) instead of being declared twice like before */
     .block-container {
     max-width: 1500px;
-    padding-top: 2rem;
+    padding-top: 4.5rem;
     padding-bottom: 90px;
     }
     /* Eyebrow */
@@ -315,72 +315,88 @@ st.markdown(
         outline: none !important;
     }
 
+    /* ── Force chat form columns to stay side-by-side on mobile ── */
+    div[data-testid="stForm"] div[data-testid="stHorizontalBlock"] {
+        flex-wrap: nowrap !important;
+        gap: 8px !important;
+        align-items: center !important;
+    }
+
+    div[data-testid="stForm"] div[data-testid="stHorizontalBlock"] > div {
+        min-width: 0 !important;          /* allow input to shrink */
+    }
+
+    /* Input column takes remaining space */
+    div[data-testid="stForm"] div[data-testid="stHorizontalBlock"] > div:first-child {
+        flex: 1 1 auto !important;
+    }
+
+    /* Button column stays fixed width */
+    div[data-testid="stForm"] div[data-testid="stHorizontalBlock"] > div:last-child {
+        flex: 0 0 48px !important;
+        width: 48px !important;
+        max-width: 48px !important;
+    }
+
     /* Chat send button */
-div[data-testid="stForm"] button[kind="secondaryFormSubmit"] {
-    border-radius: 50% !important;
-    width: 44px !important;
-    height: 44px !important;
-    min-width: 44px !important;
-    padding: 0 !important;
-    background: linear-gradient(135deg, #0b5f85, #01324a) !important;
-    border: none !important;
-    color: #fff !important;
-    font-size: 18px !important;
-}
+    div[data-testid="stForm"] button[kind="secondaryFormSubmit"] {
+        border-radius: 50% !important;
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px !important;
+        padding: 0 !important;
+        background: linear-gradient(135deg, #0b5f85, #01324a) !important;
+        border: none !important;
+        color: #fff !important;
+        font-size: 18px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
 
+    /* Lead submit button */
+    .lead-form-button-fix button {
+        border-radius: 24px !important;
+        width: 100% !important;
+        height: 42px !important;
+        min-width: 100% !important;
+        padding: 0 24px !important;
+        background: linear-gradient(135deg, #0b5f85, #01324a) !important;
+        border: none !important;
+        color: #fff !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+    }
 
-/* Lead submit button */
-.lead-form-button-fix button {
-    border-radius: 24px !important;
-    width: 100% !important;
-    height: 42px !important;
-    min-width: 100% !important;
-    padding: 0 24px !important;
-    background: linear-gradient(135deg, #0b5f85, #01324a) !important;
-    border: none !important;
-    color: #fff !important;
-    font-size: 14px !important;
-    font-weight: 600 !important;
-}
     /* Chat input remove red border */
     div[data-testid="stTextInput"] *,
     div[data-testid="stTextInput"] div[data-baseweb="input"],
     div[data-testid="stTextInput"] div[data-baseweb="base-input"],
     div[data-testid="stTextInput"] input {
-    border-color: rgba(255,255,255,0.12) !important;
-    box-shadow: none !important;
-    outline: none !important;
-}
+        border-color: rgba(255,255,255,0.12) !important;
+        box-shadow: none !important;
+        outline: none !important;
+    }
 
     div[data-testid="stTextInput"] div[data-baseweb="input"]:focus-within,
     div[data-testid="stTextInput"] div[data-baseweb="base-input"]:focus-within {
-    border-color: rgba(11,95,133,0.8) !important;
-    box-shadow: 0 0 8px rgba(11,95,133,0.4) !important;
-}
-.lede,
-.lede.secondary {
-    text-align: center !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-}
-
-.stMarkdown:has(.lede),
-.stMarkdown:has(.lede.secondary) {
-    width: 100%;
-}
-@media (max-width: 640px) {
-    div[data-testid="stHorizontalBlock"] {
-        flex-wrap: nowrap !important;
+        border-color: rgba(11,95,133,0.8) !important;
+        box-shadow: 0 0 8px rgba(11,95,133,0.4) !important;
     }
-    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
-        width: auto !important;
-        flex: 0 0 auto !important;
-    }
-}
 
+    .lede,
+    .lede.secondary {
+        text-align: center !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+    .stMarkdown:has(.lede),
+    .stMarkdown:has(.lede.secondary) {
+        width: 100%;
+    }
 
     </style>
-
     """,
     unsafe_allow_html=True
 )
