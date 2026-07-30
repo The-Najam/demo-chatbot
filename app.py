@@ -1,5 +1,5 @@
-
-
+from src.pipeline import full_pipeline
+from src.database import database_connection, notifier, table_creation
 import streamlit as st
 import streamlit.components.v1 as components
 
@@ -7,561 +7,432 @@ st.set_page_config(
     page_title="AI Immigration Assistant Demo",
     page_icon="🛂",
     layout="wide",
+    initial_sidebar_state="collapsed",
 )
 
-# Remove Streamlit's default padding/max-width so the embedded page can
-# render edge-to-edge, matching the original full-page design.
+# ──────────────────────────────────────────────────────────────────────────
+# CSS — exact visual match to the original HTML design
+# ──────────────────────────────────────────────────────────────────────────
+
 st.markdown(
     """
     <style>
-        .block-container {
-            padding-top: 0rem;
-            padding-bottom: 0rem;
-            padding-left: 0rem;
-            padding-right: 0rem;
-            max-width: 100% !important;
-        }
-        header[data-testid="stHeader"] {
-            background: transparent;
-        }
-        iframe {
-            width: 100% !important;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-ORIGINAL_HTML = r"""<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AI Immigration Assistant Demo</title>
-<style>
     @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
     :root {
         --primary: #01324a;
         --primary-soft: rgba(1, 50, 74, 0.08);
         --primary-border: rgba(1, 50, 74, 0.18);
-        --black: #05080a;
-        --white: #ffffff;
         --ink: #05080a;
         --muted: rgba(5, 8, 10, 0.56);
         --line: rgba(1, 50, 74, 0.14);
     }
-
-    * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-        font-family: 'Inter', "Segoe UI", Arial, sans-serif;
+    html, body, [class*="css"] {
+    font-family: 'Inter', "Segoe UI", Arial, sans-serif;
     }
-
-    html { scroll-behavior: smooth; }
-
-    body {
-        min-height: 100vh;
-        background:
-            radial-gradient(circle at 15% 0%, rgba(1, 50, 74, 0.55), transparent 50%),
-            radial-gradient(circle at 90% 30%, rgba(1, 50, 74, 0.4), transparent 45%),
-            radial-gradient(circle at 30% 95%, rgba(1, 50, 74, 0.35), transparent 45%),
-            linear-gradient(180deg, #05080a 0%, #071a24 45%, #05080a 100%);
-        color: var(--white);
+    .stApp {
+    background:
+        radial-gradient(circle at 15% 0%, rgba(1, 50, 74, 0.55), transparent 50%),
+        radial-gradient(circle at 90% 30%, rgba(1, 50, 74, 0.4), transparent 45%),
+        radial-gradient(circle at 30% 95%, rgba(1, 50, 74, 0.35), transparent 45%),
+        linear-gradient(180deg, #05080a 0%, #071a24 45%, #05080a 100%);
     }
-
-    .page {
-        max-width: 780px;
-        margin: 0 auto;
-        padding: 90px 24px 110px;
+    /* max-width / padding-bottom kept here; padding-top is set once
+       below (2rem) instead of being declared twice like before */
+    .block-container {
+    max-width: 1500px;
+    padding-top: 2rem;
+    padding-bottom: 90px;
     }
-
-    .eyebrow { display: flex; justify-content: center; }
-
+    /* Eyebrow */
+    .eyebrow { display: flex; justify-content: center; margin-bottom: 10px; }
     .eyebrow span {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
+        display: inline-flex; align-items: center; gap: 8px;
         font-family: 'JetBrains Mono', monospace;
-        font-size: 11.5px;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
+        font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase;
         color: rgba(255,255,255,0.6);
         border: 1px solid rgba(255,255,255,0.16);
-        padding: 7px 14px;
-        border-radius: 999px;
+        padding: 7px 14px; border-radius: 999px;
     }
-
-    .eyebrow .pulse-dot {
+    .pulse-dot {
         width: 6px; height: 6px; border-radius: 50%;
-        background: #4ADE80;
+        background: #4ADE80; display: inline-block;
         box-shadow: 0 0 0 0 rgba(74,222,128,0.6);
         animation: livePulse 2s infinite;
     }
-
     @keyframes livePulse {
         0% { box-shadow: 0 0 0 0 rgba(74,222,128,0.55); }
         70% { box-shadow: 0 0 0 7px rgba(74,222,128,0); }
         100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
     }
 
-    h1 {
+    /* Hero Section */
+        h1.hero-title {
         font-family: 'Space Grotesk', sans-serif;
-        font-weight: 600;
-        font-size: 42px;
-        line-height: 1.18;
-        letter-spacing: -0.01em;
-        text-align: center;
-        margin: 26px 0 24px;
+        font-weight: 600; font-size: 42px; line-height: 1.18;
+        letter-spacing: -0.01em; text-align: center; color: #fff;
+        margin: 10px 0 24px;
     }
-
     .lede {
-        text-align: center;
-        font-size: 16.5px;
-        line-height: 1.65;
-        color: rgba(255,255,255,0.68);
-        max-width: 600px;
-        margin: 0 auto 16px;
+        text-align: center; font-size: 16.5px; line-height: 1.65;
+        color: rgba(255,255,255,0.68); max-width: 600px; margin: 0 auto 10px;
     }
-
-    .lede.secondary {
-        color: rgba(255,255,255,0.52);
-        max-width: 640px;
-        margin-bottom: 0;
+    .lede.secondary { 
+        color: rgba(255,255,255,0.52); max-width: 640px; 
+        text-align: center; font-size: 16.5px; line-height: 1.65;
+        
     }
 
     .features-heading {
-        font-family: 'Space Grotesk', sans-serif;
-        font-weight: 600;
-        font-size: 13px;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        color: rgba(255,255,255,0.45);
-        text-align: center;
-        margin: 76px 0 32px;
+        font-family: 'Space Grotesk', sans-serif; font-weight: 600;
+        font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase;
+        color: rgba(255,255,255,0.45); text-align: center; margin: 56px 0 26px;
+    }
+    .features-heading::before, .features-heading::after {
+        content: ''; display: inline-block; width: 28px; height: 1px;
+        background: rgba(255,255,255,0.2); vertical-align: middle; margin: 0 14px;
     }
 
-    .features-heading::before,
-    .features-heading::after {
-        content: '';
-        display: inline-block;
-        width: 28px;
-        height: 1px;
-        background: rgba(255,255,255,0.2);
-        vertical-align: middle;
-        margin: 0 14px;
-    }
-
-    .features {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 18px;
-    }
-
+    /* Feature Cards */
     .feature-card {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.09);
-        border-radius: 16px;
-        padding: 26px 22px;
-        text-align: left;
-        transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 16px; padding: 24px 20px; height: 190px;
+    display: flex; flex-direction: column;
+    transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+    min-height: 190px;
+    height: auto;
     }
-
     .feature-card:hover {
         transform: translateY(-3px);
         border-color: rgba(1, 50, 74, 0.6);
         background: rgba(1, 50, 74, 0.18);
     }
-
     .feature-card .icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
-        background: var(--primary);
-        border: 1px solid rgba(255,255,255,0.15);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 16px;
-        color: var(--white);
+        width: 40px; height: 40px; border-radius: 10px;
+        background: var(--primary); border: 1px solid rgba(255,255,255,0.15);
+        display: flex; align-items: center; justify-content: center;
+        margin-bottom: 14px; color: #fff; flex-shrink: 0;
     }
-
     .feature-card h3 {
-        font-family: 'Space Grotesk', sans-serif;
-        font-weight: 600;
-        font-size: 15.5px;
-        margin-bottom: 8px;
+        font-family: 'Space Grotesk', sans-serif; font-weight: 600;
+        font-size: 15.5px; color: #fff; line-height: 1.3;
+        min-height: 40px; margin-bottom: 8px; flex-shrink: 0;
     }
-
     .feature-card p {
-        font-size: 13.5px;
-        line-height: 1.6;
-        color: rgba(255,255,255,0.55);
+        font-size: 13.5px; line-height: 1.55; color: rgba(255,255,255,0.55); margin: 0;
     }
 
-    .demo-cta {
-        text-align: center;
-        margin: 84px 0 40px;
-    }
-
+    /* Demo CTA */
+    .demo-cta { text-align: center; margin: 70px 0 10px; }
     .demo-cta h2 {
-        font-family: 'Space Grotesk', sans-serif;
-        font-weight: 600;
-        font-size: 26px;
-        margin-bottom: 14px;
+        font-family: 'Space Grotesk', sans-serif; font-weight: 600;
+        font-size: 26px; color: #fff; margin-bottom: 12px;
     }
-
     .demo-cta p {
-        font-size: 15px;
-        line-height: 1.6;
-        color: rgba(255,255,255,0.6);
-        max-width: 520px;
-        margin: 0 auto;
+        font-size: 15px; line-height: 1.6; color: rgba(255,255,255,0.6);
+        max-width: 520px; margin: 0 auto;
     }
-
     .demo-arrow {
-        display: flex;
-        justify-content: center;
-        margin-top: 26px;
-        color: rgba(255,255,255,0.35);
-        animation: bounce 2.2s infinite;
+        display: flex; justify-content: center; margin-top: 20px;
+        color: rgba(255,255,255,0.35); animation: bounce 2.2s infinite;
     }
-
     @keyframes bounce {
         0%, 100% { transform: translateY(0); }
         50% { transform: translateY(6px); }
     }
-
-    .demo-wrapper { display: flex; justify-content: center; }
-
-    .chat-container {
-        position: relative;
-        width: 400px;
-        max-width: 100%;
-        height: 600px;
-
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-
-        border-radius: 20px;
-
-        background: var(--white);
-        border: 1px solid rgba(255,255,255,0.06);
-
-        box-shadow:
-            0 40px 90px rgba(0,0,0,0.55),
-            0 12px 32px rgba(1, 50, 74, 0.3);
-
-        opacity: 0;
-        transform: translateY(16px) scale(0.98);
-        animation: containerIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-        animation-delay: 0.1s;
-    }
-
-    @keyframes containerIn {
-        to { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
-    .chat-header {
-        background: var(--primary);
-        color: var(--white);
-        padding: 18px 20px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        position: relative;
-        flex-shrink: 0;
-    }
-
-    .chat-header::after {
-        content: '';
-        position: absolute;
-        left: 0; right: 0; bottom: 0;
-        height: 1px;
-        background: rgba(255,255,255,0.12);
-    }
-
-    .chat-header .avatar {
-        width: 36px; height: 36px;
-        border-radius: 50%;
-        background: rgba(255,255,255,0.12);
-        border: 1px solid rgba(255,255,255,0.2);
-        display: flex; align-items: center; justify-content: center;
-        flex-shrink: 0;
-    }
-
-    .chat-header .titles { flex: 1; min-width: 0; }
-
-    .chat-header .titles .name {
-        font-family: 'Space Grotesk', sans-serif;
-        font-weight: 600;
-        font-size: 14.5px;
-        letter-spacing: 0.01em;
-    }
-
-    .chat-header .titles .sub {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 11.5px;
-        color: rgba(255,255,255,0.65);
-        margin-top: 2px;
-        font-family: 'JetBrains Mono', monospace;
-    }
-
-    .chat-header .titles .sub .dot {
-        width: 6px; height: 6px; border-radius: 50%;
-        background: #4ADE80;
-    }
-
-    .chat-box {
-        flex: 1;
-        overflow-y: auto;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        background: repeating-linear-gradient(
-            180deg,
-            rgba(1, 50, 74, 0.015) 0px,
-            rgba(1, 50, 74, 0.015) 1px,
-            transparent 1px,
-            transparent 32px
-        ), #ffffff;
-    }
-
-    .chat-box::-webkit-scrollbar { width: 6px; }
-    .chat-box::-webkit-scrollbar-thumb {
-        background: var(--primary-border);
-        border-radius: 999px;
-    }
-
     .message {
-        max-width: 80%;
-        padding: 12px 15px;
-        font-size: 13.5px;
-        line-height: 1.55;
-        border-radius: 14px;
-        animation: fadeIn 0.28s ease;
-        word-wrap: break-word;
+    max-width: 75%;
+    padding: 12px 16px;
+    margin: 10px 0;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: white;
+    word-wrap: break-word;
     }
 
-    .user {
-        align-self: flex-end;
-        background: var(--primary);
-        color: var(--white);
+    /* User bubble */
+    .message.user {
+        margin-left: auto;
+        background: linear-gradient(135deg, #0b5f85, #01324a);
         border-bottom-right-radius: 4px;
-        box-shadow: 0 8px 18px rgba(1, 50, 74, 0.28);
+        text-align: left;
     }
 
-    .bot {
-        align-self: flex-start;
-        background: var(--white);
-        color: var(--ink);
-        border: 1px solid var(--line);
-        border-bottom-left-radius: 4px;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.04);
+    /* Bot bubble */
+    .message.bot {
+        margin-right: auto;
+        background: rgba(255,255,255,0.08);
+        border:1px solid rgba(255,255,255,0.12);
+        border-bottom-left-radius:4px;
+        color:rgba(255,255,255,0.85);
     }
 
-    .typing {
-        align-self: flex-start;
+    /* Chat message spacing */
+    .marker-chat-messages {
+        display:block;
+    }
+
+    /* Chat Input - Theme Friendly */
+    div[data-testid="stChatInput"] {
+        position:sticky;
+        bottom:15px;
+        padding-top:10px;
+        z-index:999;
+    }
+
+    div[data-testid="stChatInput"] textarea {
+        border-radius:20px;
+        color:#000;
+
+    }
+    
+
+    /* Footer */
+    .footer {
+        text-align:center;
+        color:#777;
+        margin-top:40px;
+    }
+
+    /* ── Chat header ── */
+    .chat-header {
         display: flex;
         align-items: center;
-        gap: 5px;
-        background: var(--white);
-        border: 1px solid var(--line);
-        padding: 12px 16px;
-        border-radius: 14px;
-        border-bottom-left-radius: 4px;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.03);
+        gap: 12px;
+        margin-bottom: 14px;
+        padding: 0 2px;
     }
-
-    .typing .t-dot {
-        width: 6px; height: 6px; border-radius: 50%;
-        background: var(--primary);
-        opacity: 0.4;
-        animation: dotPulse 1s infinite ease-in-out;
-    }
-    .typing .t-dot:nth-child(2) { animation-delay: 0.15s; }
-    .typing .t-dot:nth-child(3) { animation-delay: 0.3s; }
-
-    @keyframes dotPulse {
-        0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
-        30% { opacity: 1; transform: translateY(-3px); }
-    }
-
-    .chat-input {
-        display: flex;
-        gap: 10px;
-        padding: 16px;
-        background: var(--white);
-        border-top: 1px solid var(--line);
-        flex-shrink: 0;
-    }
-
-    .chat-input input {
-        flex: 1;
-        padding: 12px 14px;
-        border-radius: 12px;
-        border: 1px solid var(--primary-border);
-        background: #fff;
-        outline: none;
-        font-size: 13.5px;
-        color: var(--ink);
-        transition: all 0.2s ease;
-    }
-
-    .chat-input input::placeholder { color: var(--muted); }
-
-    .chat-input input:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 4px var(--primary-soft);
-    }
-
-    .chat-input button {
-        width: 44px;
-        padding: 0;
-        border: none;
-        border-radius: 12px;
-        background: var(--primary);
-        color: var(--white);
-        cursor: pointer;
+    .chat-header .avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.12);
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
-        box-shadow: 0 6px 16px rgba(1, 50, 74, 0.3);
+        font-size: 20px;
         flex-shrink: 0;
     }
-
-    .chat-input button:hover {
-        transform: translateY(-1px) scale(1.03);
-        box-shadow: 0 10px 22px rgba(1, 50, 74, 0.38);
+    .chat-header .name {
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 600;
+        font-size: 16px;
+        color: #fff;
+        line-height: 1.2;
     }
-
-    .chat-input button:active { transform: scale(0.95); }
-
-    .lead-form {
-        align-self: flex-start;
-        background: var(--white);
-        border: 1px solid var(--line);
-        border-radius: 16px;
-        padding: 16px;
-        max-width: 92%;
+    .chat-header .sub {
+        font-size: 13px;
+        color: rgba(255,255,255,0.55);
         display: flex;
-        flex-direction: column;
-        gap: 10px;
-        box-shadow: 0 8px 20px rgba(1, 50, 74, 0.08);
-        position: relative;
+        align-items: center;
+        gap: 6px;
+        margin-top: 2px;
+    }
+    .chat-header .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #4ADE80;
+        display: inline-block;
+        box-shadow: 0 0 0 0 rgba(74,222,128,0.55);
+        animation: livePulse 2s infinite;
     }
 
-    .lead-form::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 16px; right: 16px;
-        height: 3px;
-        background: var(--primary);
-        border-radius: 0 0 3px 3px;
+    /* ── Tagged containers ── */
+    .tag-chat-messages {
+        border: 1px solid rgba(255,255,255,0.12) !important;
+        border-radius: 16px !important;
+        background: rgba(0,0,0,0.18) !important;
+        padding: 12px 16px !important;
+        margin-bottom: 12px !important;
     }
-
-    .lead-form p {
-        font-size: 12.5px;
-        color: var(--muted);
-        line-height: 1.5;
+    .tag-chat-input {
         margin-top: 4px;
     }
-
-    .lead-form input,
-    .lead-form textarea {
-        padding: 10px 12px;
-        border-radius: 10px;
-        border: 1px solid var(--primary-border);
-        outline: none;
-        font-size: 12.5px;
-        font-family: inherit;
-        color: var(--ink);
-        resize: none;
-        transition: all 0.2s ease;
+    .tag-lead-form {
+        margin-top: 8px;
     }
 
-    .lead-form input:focus,
-    .lead-form textarea:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 4px var(--primary-soft);
+    /* Lead form helpers */
+    .lead-form-note {
+        font-size: 14px;
+        color: rgba(255,255,255,0.65);
+        margin: 0 0 12px 0;
+        text-align: center;
     }
-
-    .lead-form .lead-submit {
-        padding: 11px;
-        border: none;
-        border-radius: 10px;
-        background: var(--primary);
-        color: var(--white);
-        font-size: 12.5px;
-        font-weight: 600;
-        letter-spacing: 0.02em;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        box-shadow: 0 6px 16px rgba(1, 50, 74, 0.28);
-    }
-
-    .lead-form .lead-submit:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 10px 22px rgba(1, 50, 74, 0.34);
-    }
-
-    .lead-form .lead-submit:disabled {
-        opacity: 0.6;
-        cursor: default;
-        transform: none;
-    }
-
     .lead-success {
-        align-self: flex-start;
-        background: rgba(1, 50, 74, 0.06);
-        border: 1px solid rgba(1, 50, 74, 0.18);
-        color: var(--primary);
-        font-size: 12.5px;
-        padding: 13px 15px;
-        border-radius: 14px;
-        max-width: 92%;
+        background: rgba(74,222,128,0.12);
+        border: 1px solid rgba(74,222,128,0.35);
+        border-radius: 12px;
+        padding: 14px 18px;
+        color: #4ADE80;
+        font-size: 14px;
+        text-align: center;
+        margin-top: 12px;
     }
 
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(8px); }
-        to { opacity: 1; transform: translateY(0); }
+    /* ── Form input styling ── */
+    div[data-testid="stForm"] {
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
     }
 
-    @media (prefers-reduced-motion: reduce) {
-        .message, .chat-input button, .lead-form .lead-submit, .chat-container, .demo-arrow, .pulse-dot { animation: none !important; transition: none !important; opacity: 1 !important; transform: none !important; }
+    /* Hide Streamlit's "Press Enter to submit form" helper text */
+    div[data-testid="stForm"] [data-testid="InputInstructions"],
+    div[data-testid="stForm"] small,
+    div[data-testid="stForm"] [data-testid="stFieldInstructions"] {
+        display: none !important;
     }
 
-    @media (max-width: 720px) {
-        .features { grid-template-columns: 1fr; }
-        h1 { font-size: 32px; }
-        .page { padding: 60px 20px 80px; }
+    /* Custom Base Input Styling */
+    div[data-testid="stForm"] [data-testid="stTextInput"] input,
+    div[data-testid="stForm"] [data-testid="stTextArea"] textarea {
+        background: #ffffff !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border-radius: 12px !important;
+        color: #111 !important;
+        padding: 12px 18px !important;
+        font-size: 14px !important;
+        outline: none !important;
+        box-shadow: none !important;
     }
 
-    @media (max-width: 480px) {
-        .chat-container { width: 100%; height: 560px; }
+    div[data-testid="stForm"] [data-testid="stTextInput"] input::placeholder,
+    div[data-testid="stForm"] [data-testid="stTextArea"] textarea::placeholder {
+        color: rgba(0,0,0,0.45) !important;
     }
-</style>
-</head>
-<body>
 
-<div class="page">
+    /* Remove Red Focus Highlight & Replace with Soft Azure Glow */
+    div[data-testid="stForm"] [data-testid="stTextInput"] input:focus,
+    div[data-testid="stForm"] [data-testid="stTextArea"] textarea:focus,
+    div[data-testid="stForm"] [data-baseweb="input"]:focus-within {
+        border-color: rgba(11, 95, 133, 0.8) !important;
+        box-shadow: 0 0 8px rgba(11, 95, 133, 0.4) !important;
+        outline: none !important;
+    }
 
-    <div class="eyebrow"><span><span class="pulse-dot"></span> AI Immigration Assistant Demo</span></div>
+    /* Chat send button */
+div[data-testid="stForm"] button[kind="secondaryFormSubmit"] {
+    border-radius: 50% !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    padding: 0 !important;
+    background: linear-gradient(135deg, #0b5f85, #01324a) !important;
+    border: none !important;
+    color: #fff !important;
+    font-size: 18px !important;
+}
 
-    <h1>See How AI Can Help You Capture More Leads &amp; Support Clients 24/7</h1>
 
-    <p class="lede">Give your potential clients instant answers while capturing valuable lead information — even when your team is unavailable.</p>
-    <p class="lede secondary">This AI-powered chatbot is designed for immigration consultants to handle common client questions, guide visitors through their journey, and help you identify serious prospects faster.</p>
+/* Lead submit button */
+.lead-form-button-fix button {
+    border-radius: 24px !important;
+    width: 100% !important;
+    height: 42px !important;
+    min-width: 100% !important;
+    padding: 0 24px !important;
+    background: linear-gradient(135deg, #0b5f85, #01324a) !important;
+    border: none !important;
+    color: #fff !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+}
+    /* Chat input remove red border */
+    div[data-testid="stTextInput"] *,
+    div[data-testid="stTextInput"] div[data-baseweb="input"],
+    div[data-testid="stTextInput"] div[data-baseweb="base-input"],
+    div[data-testid="stTextInput"] input {
+    border-color: rgba(255,255,255,0.12) !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
 
-    <div class="features-heading">What This Demo Shows</div>
+    div[data-testid="stTextInput"] div[data-baseweb="input"]:focus-within,
+    div[data-testid="stTextInput"] div[data-baseweb="base-input"]:focus-within {
+    border-color: rgba(11,95,133,0.8) !important;
+    box-shadow: 0 0 8px rgba(11,95,133,0.4) !important;
+}
+.lede,
+.lede.secondary {
+    text-align: center !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
 
-    <div class="features">
+.stMarkdown:has(.lede),
+.stMarkdown:has(.lede.secondary) {
+    width: 100%;
+}
+
+
+    </style>
+
+    """,
+    unsafe_allow_html=True
+)
+
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "lead_form_shown" not in st.session_state:
+    st.session_state.lead_form_shown = False
+if "show_lead_form_now" not in st.session_state:
+    st.session_state.show_lead_form_now = False
+if "lead_submitted" not in st.session_state:
+    st.session_state.lead_submitted = False
+if "last_question" not in st.session_state:
+    st.session_state.last_question = ""
+if "pending_bot" not in st.session_state:
+    st.session_state.pending_bot = False
+if "db_ready" not in st.session_state:
+    try:
+        table_creation()
+    except Exception:
+        pass
+    st.session_state.db_ready = True
+
+BUYING_INTENT_PHRASES = [
+    "price", "pricing", "cost", "quote", "book", "booking", "consultation",
+    "schedule", "appointment", "get started", "next step", "sign up",
+    "purchase", "buy", "interested", "contact me", "call me",
+    "how do i start", "how can i start", "how do i proceed", "when can we start",
+    "can i book", "can i schedule", "send pricing", "send quote",
+    "i want to learn more", "i need your services", "i'm interested in your services",
+    "charges", "what are your rates", "how much do you charge", "fee structure",
+    "how to hire", "want to work with you", "looking for", "need help with",
+]
+
+FALLBACK_MARKER = "please leave your details below"
+
+def has_buying_intent(text: str) -> bool:
+    lower = text.lower()
+    return any(phrase in lower for phrase in BUYING_INTENT_PHRASES)
+
+
+# --------------------------------
+# Hero
+# --------------------------------
+
+st.markdown(
+    """
+<div class="eyebrow"><span><span class="pulse-dot"></span> AI Immigration Assistant Demo</span></div>
+<h1 class="hero-title">See How AI Can Help You Capture More Leads &amp; Support Clients 24/7</h1>
+<p class="lede">Give your potential clients instant answers while capturing valuable lead information — even when your team is unavailable.</p>
+<p class="lede secondary">This AI-powered chatbot is designed for immigration consultants to handle common client questions, guide visitors through their journey, and help you identify serious prospects faster.</p>
+<div class="features-heading">What This Demo Shows</div>
+""",
+    unsafe_allow_html=True,
+)
+
+c1, c2, c3 = st.columns(3, gap="medium")
+
+with c1:
+    st.markdown(
+        """
         <div class="feature-card">
             <div class="icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
@@ -569,516 +440,325 @@ ORIGINAL_HTML = r"""<!DOCTYPE html>
             <h3>Instant Client Support</h3>
             <p>Answer frequently asked immigration questions anytime with an AI assistant that provides quick, helpful responses.</p>
         </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
+with c2:
+    st.markdown(
+        """
         <div class="feature-card">
             <div class="icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
+                <svg width="18" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
             </div>
             <h3>Smart Lead Capture</h3>
             <p>Collect visitor details and understand their needs so your team can follow up with qualified prospects.</p>
         </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
+with c3:
+    st.markdown(
+        """
         <div class="feature-card">
             <div class="icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+                <svg width="18" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
             </div>
             <h3>Always Available</h3>
             <p>Never miss an opportunity. Your AI assistant works around the clock to engage website visitors and support your business.</p>
         </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+st.markdown(
+    """
+<div class="demo-cta">
+    <h2>Try the Demo Below</h2>
+    <p>Experience how an AI chatbot can turn more website visitors into potential clients while saving your team valuable time.</p>
+    <div class="demo-arrow">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
     </div>
-
-    <div class="demo-cta">
-        <h2>Try the Demo Below</h2>
-        <p>Experience how an AI chatbot can turn more website visitors into potential clients while saving your team valuable time.</p>
-        <div class="demo-arrow">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
-        </div>
-    </div>
-
-    <div class="demo-wrapper">
-        <div class="chat-container" id="chatContainer">
-
-          <div class="chat-header">
-              <div class="avatar">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-              </div>
-              <div class="titles">
-                  <div class="name">Immigration Assistant</div>
-                  <div class="sub"><span class="dot"></span> Online now</div>
-              </div>
-          </div>
-
-          <div class="chat-box" id="chatBox"></div>
-
-          <div class="chat-input">
-            <input
-              type="text"
-              id="userInput"
-              placeholder="Ask about visas, eligibility, timelines..."
-            />
-            <button onclick="sendMessage()" aria-label="Send message">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-            </button>
-          </div>
-        </div>
-    </div>
-
 </div>
+""",
+    unsafe_allow_html=True,
+)
+
+
+st.divider()
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# Chat card
+# ──────────────────────────────────────────────────────────────────────────
+
+left, center, right = st.columns([1.8, 3, 1.8])
+
+with center:
+
+    # Header
+    st.markdown(
+        """
+        <div class="chat-header">
+            <div class="avatar">🤖</div>
+            <div>
+                <div class="name">Immigration Assistant</div>
+                <div class="sub">
+                    <span class="dot"></span> Online now
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '<div class="marker-chat-messages"></div>',
+        unsafe_allow_html=True
+    )
+
+    messages_area = st.container(height=450)
+
+    with messages_area:
+
+        bubbles = "".join(
+            f'<div class="message {m["type"]}">{m["text"]}</div>'
+            for m in st.session_state.messages
+        )
+
+        st.markdown(
+            bubbles,
+            unsafe_allow_html=True
+        )
+
+        if st.session_state.pending_bot:
+            st.markdown(
+                '<div class="message bot">Thinking…</div>',
+                unsafe_allow_html=True
+            )
+
+
+        # Lead form inside conversation area
+        if (
+            st.session_state.show_lead_form_now
+            and not st.session_state.lead_submitted
+        ):
+
+            st.markdown(
+                '<div class="marker-lead-form"></div>',
+                unsafe_allow_html=True
+            )
+
+            st.markdown(
+                """
+                <p class="lead-form-note">
+                Want us to get back to you directly? Leave your details below.
+                </p>
+                """,
+                unsafe_allow_html=True
+            )
+            st.markdown(
+                '<div class="lead-form-button-fix">',
+                unsafe_allow_html=True
+            )
 
-<script>
 
-  const chatBox = document.getElementById("chatBox");
+            with st.form(
+                "lead_form",
+                clear_on_submit=False
+            ):
 
-  const userInput = document.getElementById("userInput");
+                name = st.text_input(
+                    "Your name",
+                    placeholder="Your name",
+                    label_visibility="collapsed",
+                )
 
-  const chatContainer = document.getElementById("chatContainer");
+                email = st.text_input(
+                    "Your email",
+                    placeholder="Your email",
+                    label_visibility="collapsed",
+                )
 
+                extra = st.text_area(
+                    "Anything else",
+                    placeholder="Anything else (optional)",
+                    label_visibility="collapsed",
+                    height=70,
+                )
 
 
-  const API_BASE = "http://localhost:8000";
+                submitted = st.form_submit_button(
+                    "Submit"
+                )
+                st.markdown(
+                    '</div>',
+                    unsafe_allow_html=True
+                )
 
 
-  const FALLBACK_TEXT =
+            if submitted:
 
-    "I don't have that information right now. Please leave your details below and our team will get back to you shortly.";
+                if not name.strip() or not email.strip():
 
+                    st.warning(
+                        "Please enter your name and email."
+                    )
 
+                else:
 
-  const buyingIntentPhrases = [
+                    # Wrapped in try/except: if the DB insert or notification
+                    # fails (bad connection, schema mismatch, etc.) the user
+                    # now sees a clear error instead of the whole app crashing.
+                    try:
+                        notifier(
+                            name=name.strip(),
+                            email=email.strip(),
+                            question=st.session_state.last_question,
+                            message=extra.strip() or None,
+                        )
+                    except Exception as e:
+                        st.error(f"Something went wrong saving your details: {e}")
+                    else:
+                        st.session_state.lead_submitted = True
+                        st.rerun()
 
-    "price",
 
-    "pricing",
 
-    "cost",
+        if st.session_state.lead_submitted:
 
-    "quote",
+            st.markdown(
+                """
+                <div class="lead-success">
+                Thanks! We've received your details and will get back to you soon.
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
-    "book",
 
-    "booking",
 
-    "consultation",
+    # Generate bot reply
 
-    "schedule",
+    if st.session_state.pending_bot:
 
-    "appointment",
+        last_user = st.session_state.last_question
 
-    "get started",
+        try:
 
-    "next step",
+            response = full_pipeline(
+                last_user,
+                st.session_state.messages,
+            )
 
-    "sign up",
+        except Exception as e:
 
-    "purchase",
+            st.error(e)
 
-    "buy",
+            response = (
+                "I don't have that information right now."
+            )
 
-    "interested",
 
-    "contact me",
+        st.session_state.messages.append(
+            {
+                "type": "bot",
+                "text": response
+            }
+        )
 
-    "call me",
 
-    "how do i start",
+        st.session_state.pending_bot = False
 
-    "how can i start",
 
-    "how do i proceed",
+        if (
+            FALLBACK_MARKER in response.lower()
+            or has_buying_intent(last_user)
+        ):
 
-    "when can we start",
+            st.session_state.show_lead_form_now = True
 
-    "can i book",
 
-    "can i schedule",
+        st.rerun()
 
-    "send pricing",
 
-    "send quote",
 
-    "i want to learn more",
+    # Chat input stays at bottom
 
-    "i need your services",
+    st.markdown(
+        '<div class="marker-chat-input"></div>',
+        unsafe_allow_html=True
+    )
 
-    "i'm interested in your services",
 
-    "charges",
+    with st.form(
+        "chat_form",
+        clear_on_submit=True
+    ):
 
-    "what are your rates",
+        col_input, col_btn = st.columns([6, 1])
 
-    "how much do you charge",
+        query = col_input.text_input(
+            "Message",
+            placeholder="Ask about visas, eligibility, timelines...",
+            label_visibility="collapsed",
+            key="chat_input",
+        )
 
-    "fee structure",
+        sent = col_btn.form_submit_button(
+            "➤"
+        )
 
-    "how to hire",
 
-    "want to work with you",
+    if sent and query.strip():
 
-    "looking for",
+        st.session_state.last_question = query.strip()
 
-    "need help with"
+        st.session_state.messages.append(
+            {
+                "type": "user",
+                "text": query.strip()
+            }
+        )
 
-  ];
+        st.session_state.pending_bot = True
 
+        st.rerun()
 
 
-  function toggleChat() {
-
-    chatContainer.classList.toggle("open");
-
-  }
-
-
-
-  function appendMessage(text, type) {
-
-    const msg = document.createElement("div");
-
-    msg.classList.add("message", type);
-
-    msg.innerText = text;
-
-
-
-    chatBox.appendChild(msg);
-
-    chatBox.scrollTop = chatBox.scrollHeight;
-
-
-
-    const history = JSON.parse(
-
-      sessionStorage.getItem("chatHistory") || "[]"
-
-    );
-
-
-
-    history.push({ text, type });
-
-    sessionStorage.setItem("chatHistory", JSON.stringify(history));
-
-
-
-    return msg;
-
-  }
-
-
-
-  function loadChatHistory() {
-
-    const history = JSON.parse(
-
-      sessionStorage.getItem("chatHistory") || "[]"
-
-    );
-
-
-
-    history.forEach(function (msg) {
-
-      const el = document.createElement("div");
-
-      el.classList.add("message", msg.type);
-
-      el.innerText = msg.text;
-
-      chatBox.appendChild(el);
-
-    });
-
-
-
-    chatBox.scrollTop = chatBox.scrollHeight;
-
-  }
-
-
-
-  function appendLeadForm(userQuestion) {
-
-
-
-    if (sessionStorage.getItem("leadFormShown") === "true") {
-
-      return;
-
-    }
-
-
-
-    sessionStorage.setItem("leadFormShown", "true");
-
-
-
-    const form = document.createElement("div");
-
-    form.classList.add("lead-form");
-
-
-
-    form.innerHTML = `
-
-      <p>Want us to get back to you directly? Leave your details below.</p>
-
-      <input type="text" placeholder="Your name" class="lead-name" />
-
-      <input type="email" placeholder="Your email" class="lead-email" />
-
-      <textarea
-
-        placeholder="Anything else to add? (optional)"
-
-        class="lead-message"
-
-        rows="2"
-
-      ></textarea>
-
-      <button class="lead-submit">Submit</button>
-
-    `;
-
-
-
-    chatBox.appendChild(form);
-
-    chatBox.scrollTop = chatBox.scrollHeight;
-
-
-
-    const submitBtn = form.querySelector(".lead-submit");
-
-
-
-    submitBtn.addEventListener("click", async function () {
-
-      const name = form.querySelector(".lead-name").value.trim();
-
-      const email = form.querySelector(".lead-email").value.trim();
-
-      const extraMessage = form
-
-        .querySelector(".lead-message")
-
-        .value.trim();
-
-
-
-      if (!name || !email) {
-
-        alert("Please enter your name and email.");
-
-        return;
-
-      }
-
-
-
-      submitBtn.disabled = true;
-
-      submitBtn.innerText = "Sending...";
-
-
-
-      try {
-
-        const response = await fetch(`${API_BASE}/leads`, {
-
-          method: "POST",
-
-          headers: {
-
-            "Content-Type": "application/json",
-
-          },
-
-          body: JSON.stringify({
-
-            name: name,
-
-            email: email,
-
-            question: userQuestion,
-
-            message: extraMessage || null
-
-          })
-
-        });
-
-
-
-        if (!response.ok) throw new Error("API Error");
-
-
-
-        form.remove();
-
-
-
-        const success = document.createElement("div");
-
-        success.classList.add("lead-success");
-
-        success.innerText =
-
-          "Thanks! We've received your details and will get back to you soon.";
-
-
-
-        chatBox.appendChild(success);
-
-        chatBox.scrollTop = chatBox.scrollHeight;
-
-      } catch (error) {
-
-        submitBtn.disabled = false;
-
-        submitBtn.innerText = "Submit";
-
-        alert("Something went wrong. Please try again.");
-
-      }
-
-    });
-
-  }
-
-
-
-  async function sendMessage() {
-
-    const message = userInput.value.trim();
-
-
-
-    if (!message) return;
-
-
-
-    appendMessage(message, "user");
-
-    userInput.value = "";
-
-
-
-    const typing = document.createElement("div");
-
-    typing.classList.add("typing");
-
-    typing.innerHTML = '<span class="t-dot"></span><span class="t-dot"></span><span class="t-dot"></span>';
-
-
-
-    chatBox.appendChild(typing);
-
-    chatBox.scrollTop = chatBox.scrollHeight;
-
-
-
-    try {
-
-      const response = await fetch(`${API_BASE}/chat`, {
-
-        method: "POST",
-
-        headers: {
-
-          "Content-Type": "application/json",
-
-        },
-
-        body: JSON.stringify({
-
-          query: message,
-          history: JSON.parse(sessionStorage.getItem("chatHistory") || "[]")
-
-        })
-
-      });
-
-
-
-      if (!response.ok) throw new Error("API Error");
-
-
-
-      const data = await response.json();
-
-
-
-      typing.remove();
-
-
-
-      const botText = data.response || "No response received.";
-
-      appendMessage(botText, "bot");
-
-      const lowerMessage = message.toLowerCase();
-
-      const hasBuyingIntent = buyingIntentPhrases.some(
-
-        phrase => lowerMessage.includes(phrase)
-
-      );
-
-      const isFallback = botText.includes(
-
-        "Please leave your details below"
-
-      );
-
-     if (isFallback || hasBuyingIntent || data.show_form) {
-
-    if (sessionStorage.getItem("leadFormShown") !== "true") {
-
-        appendLeadForm(message);
-
-    } else {
-
-        appendMessage("Please fill in the form above to get in touch with our team.", "bot");
-
-    }
-
-}
-
-    } catch (error) {
-
-      typing.remove();
-
-      appendMessage(
-
-        "Something went wrong. Please try again.",
-
-        "bot"
-
-      );
-
-    }
-
-  }
-
-
-  userInput.addEventListener("keypress", function (e) {
-
-    if (e.key === "Enter") sendMessage();
-
-  });
-
-
-
-  loadChatHistory();
-
-</script>
-
-</body>
-</html>
-"""
-
-# Render the untouched HTML/CSS/JS inside Streamlit.
-# height/scrolling are tuned so the whole landing page + chat widget fit
-# without an extra inner scrollbar; adjust `height` if you add/remove content.
-components.html(ORIGINAL_HTML, height=1000, scrolling=True)
+# Tag Streamlit containers so the CSS classes apply correctly
+components.html(
+    """
+    <script>
+    (function () {
+        const markerToTag = {
+            "marker-chat-messages": "tag-chat-messages",
+            "marker-chat-input": "tag-chat-input",
+            "marker-lead-form": "tag-lead-form",
+        };
+        function tagAncestors() {
+            const doc = window.parent.document;
+            Object.entries(markerToTag).forEach(([markerClass, tagClass]) => {
+                const marker = doc.querySelector("." + markerClass);
+                if (!marker) return;
+                let el = marker.parentElement;
+                while (el && el.getAttribute("data-testid") !== "stVerticalBlock") {
+                    el = el.parentElement;
+                }
+                if (el && !el.classList.contains(tagClass)) {
+                    el.classList.add(tagClass);
+                }
+            });
+        }
+        let tries = 0;
+        const timer = setInterval(function () {
+            tagAncestors();
+            tries += 1;
+            if (tries > 25) clearInterval(timer);
+        }, 150);
+    })();
+    </script>
+    """,
+    height=0,
+)
