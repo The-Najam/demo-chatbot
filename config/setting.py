@@ -15,8 +15,6 @@ class Settings(BaseSettings):
     qdrant_url: str
     qdrant_collection_name: str 
     qdrant_api_key : str
-    smtp_email: str = Field(..., env="SMTP_EMAIL")
-    smtp_password: str = Field(..., env="SMTP_PASSWORD")
     client_email: str = Field(..., env="CLIENT_EMAIL")
     resend_api_key : str= Field(..., env="RESEND_API_KEY")
 
