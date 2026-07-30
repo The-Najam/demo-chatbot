@@ -368,6 +368,15 @@ div[data-testid="stForm"] button[kind="secondaryFormSubmit"] {
 .stMarkdown:has(.lede.secondary) {
     width: 100%;
 }
+@media (max-width: 640px) {
+    div[data-testid="stHorizontalBlock"] {
+        flex-wrap: nowrap !important;
+    }
+    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:last-child {
+        width: auto !important;
+        flex: 0 0 auto !important;
+    }
+}
 
 
     </style>
