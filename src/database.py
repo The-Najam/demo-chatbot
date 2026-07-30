@@ -37,7 +37,6 @@ def delete_db(db_connection, cursor):
 
 
 def notifier(name,email,question,message):
-    sender_email = setting.smtp_email
     recipient_email = setting.client_email
     resend.api_key = setting.resend_api_key
    
