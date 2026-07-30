@@ -11,7 +11,7 @@ model = genai.GenerativeModel(setting.gemini_model)
 
 async def main():
     async with AsyncWebCrawler() as crawler:
-        content = await crawler.arun("https://www.radvisionworld.com/frequently-asked-questions/")
+        content = await crawler.arun("")
         result = content.markdown
     
     return result
